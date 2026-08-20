@@ -1,0 +1,10 @@
+.env
+Claude.md
+data/raw/*.csv
+!data/raw/.gitkeep
+logs/
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+*.egg-info/

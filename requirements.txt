@@ -1,0 +1,15 @@
+# Extra Python dependencies installed into the Airflow image via docker-compose.yaml's
+# _PIP_ADDITIONAL_REQUIREMENTS. Kept here as the documented source of truth for what the
+# runtime needs, even though the compose file is what actually triggers the install.
+#
+# pymysql / psycopg2-binary chosen over mysqlclient because they're pure-Python / ship
+# binary wheels -- no native compiler or system dev headers needed inside the Airflow image.
+pandas>=2.2
+pymysql>=1.1
+psycopg2-binary>=2.9
+
+# Local dev / testing (run outside the container: pip install -r requirements.txt)
+pytest>=8.0
+black>=24.0
+isort>=5.13
+flake8>=7.0
