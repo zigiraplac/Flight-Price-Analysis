@@ -81,3 +81,39 @@ An early draft named the code path that isolates bad rows "quarantine"
 different words for the same concept. Caught during design review and
 standardized on "reject" everywhere (`reject_writer.py`, docstrings, this
 document) so the vocabulary in code, schema, and docs all match.
+
+## 7. MySQL has no real boolean type, and it broke the Postgres load
+
+Running the full pipeline end-to-end against live containers (not just unit
+tests) surfaced a bug the pure-logic tests couldn't catch: `load_to_analytics`
+failed with `column "is_peak_season" is of type boolean but expression is of
+type integer`.
+
+`is_peak_season` is computed in pandas as a real boolean, and MySQL stores it
+in `staging.kpi_seasonal_fare_variation` as `TINYINT(1)` (MySQL has no native
+boolean type — `TINYINT(1)` is the conventional stand-in). When
+`load_to_analytics` reads that table back out of MySQL, pandas returns the
+column as a plain integer (`0`/`1`), not a Python bool. Postgres's real
+`BOOLEAN` column then rejects the integer parameter outright rather than
+implicitly casting it.
+
+Only `kpi_seasonal_fare_variation` hit this — `fct_flights`' own
+`is_peak_season` is computed fresh from `seasonality` in Python at load time,
+never round-tripped through MySQL, so it was never at risk.
+
+**Resolution (original):** explicitly `.astype(bool)` the column right after
+reading it back from MySQL, before writing to Postgres. The broader lesson:
+a value's *type* isn't always preserved by a round trip through a database
+that models it differently — this only surfaces by actually running the
+pipeline against both real databases, which is why it wasn't caught by the
+pure-pandas unit tests (which never touch either database) or by testing
+MySQL and Postgres in isolation.
+
+**Superseded:** the KPI aggregates (including `kpi_seasonal_fare_variation`)
+were later moved out of MySQL staging entirely — `plugins/load.py` now
+computes them fresh from `staging.flights` in pandas, right before writing
+to Postgres, instead of staging them in MySQL first. That removes the round
+trip this bug depended on, so the `.astype(bool)` workaround is gone too.
+Kept here as a record of the failure mode, since the same class of bug would
+reappear if any boolean-typed column is ever round-tripped through MySQL
+again.

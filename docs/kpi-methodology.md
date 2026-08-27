@@ -1,11 +1,12 @@
 # KPI Methodology
 
 All four KPIs are computed in
-[`plugins/transform/kpis.py`](../plugins/transform/kpis.py) — pure pandas
+[`plugins/transform.py`](../plugins/transform.py) — pure pandas
 functions, unit-tested in
-[`tests/test_transformations.py`](../tests/test_transformations.py) — from the
-validated `staging.flights` table, then copied into both MySQL staging
-(`staging.kpi_*`) and Postgres (`analytics.kpi_*`).
+[`tests/test_transformations.py`](../tests/test_transformations.py). They're
+called from `plugins/load.py` at load time, directly against the validated
+`staging.flights` table, and written straight into Postgres
+(`analytics.kpi_*`) — MySQL staging never holds a copy of them.
 
 ## Total Fare (prerequisite for every KPI below)
 
