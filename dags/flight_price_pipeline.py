@@ -24,10 +24,8 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 
-from airflow.decorators import dag, task
 from airflow.exceptions import AirflowFailException
-from airflow.operators.python import get_current_context
-from airflow.utils.trigger_rule import TriggerRule
+from airflow.sdk import TriggerRule, dag, get_current_context, task
 
 from plugins.common.db import get_mysql_engine, get_postgres_engine
 from plugins.ingestion import (

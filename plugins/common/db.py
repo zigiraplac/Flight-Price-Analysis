@@ -10,7 +10,7 @@ installs with no native compiler needed inside the Airflow image.
 
 from __future__ import annotations
 
-from airflow.hooks.base import BaseHook
+from airflow.sdk import BaseHook
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 
