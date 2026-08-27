@@ -5,6 +5,7 @@
 # pymysql / psycopg2-binary chosen over mysqlclient because they're pure-Python / ship
 # binary wheels -- no native compiler or system dev headers needed inside the Airflow image.
 pandas>=2.2
+sqlalchemy>=2.0
 pymysql>=1.1
 psycopg2-binary>=2.9
 

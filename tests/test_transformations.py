@@ -1,8 +1,8 @@
-"""Unit tests for plugins/transform/kpis.py -- pure pandas logic, no DB/Airflow needed."""
+"""Unit tests for plugins/transform.py -- pure pandas logic, no DB/Airflow needed."""
 
 import pandas as pd
 
-from plugins.transform.kpis import (
+from plugins.transform import (
     compute_kpis,
     recompute_total_fare,
     with_peak_season_flag,

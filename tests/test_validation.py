@@ -1,8 +1,8 @@
-"""Unit tests for plugins/validation/rules.py -- pure pandas logic, no DB/Airflow needed."""
+"""Unit tests for plugins/validation.py -- pure pandas logic, no DB/Airflow needed."""
 
 import pandas as pd
 
-from plugins.validation.rules import validate_dataframe
+from plugins.validation import validate_dataframe
 
 BASE_ROW = {
     "id": 0,

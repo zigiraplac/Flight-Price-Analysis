@@ -56,31 +56,3 @@ CREATE TABLE IF NOT EXISTS rejected_rows (
     reason                 VARCHAR(500)  NOT NULL,
     INDEX idx_rejected_reason (reason(100))
 ) ENGINE=InnoDB;
-
--- KPI aggregates computed by the transform task. Truncated and reloaded every DAG run;
--- the load task reads these as-is and copies them into the Postgres analytics schema.
-CREATE TABLE IF NOT EXISTS kpi_avg_fare_by_airline (
-    airline         VARCHAR(100) PRIMARY KEY,
-    avg_total_fare  DECIMAL(14,4) NOT NULL,
-    booking_count   INT NOT NULL
-) ENGINE=InnoDB;
-
-CREATE TABLE IF NOT EXISTS kpi_seasonal_fare_variation (
-    seasonality     VARCHAR(30) PRIMARY KEY,
-    is_peak_season  TINYINT(1) NOT NULL,
-    avg_total_fare  DECIMAL(14,4) NOT NULL,
-    booking_count   INT NOT NULL
-) ENGINE=InnoDB;
-
-CREATE TABLE IF NOT EXISTS kpi_booking_count_by_airline (
-    airline        VARCHAR(100) PRIMARY KEY,
-    booking_count  INT NOT NULL
-) ENGINE=InnoDB;
-
-CREATE TABLE IF NOT EXISTS kpi_top_routes (
-    route_rank        INT PRIMARY KEY,
-    source_code       VARCHAR(10) NOT NULL,
-    destination_code  VARCHAR(10) NOT NULL,
-    route_label       VARCHAR(50) NOT NULL,
-    booking_count     INT NOT NULL
-) ENGINE=InnoDB;

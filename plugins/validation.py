@@ -1,12 +1,17 @@
-"""Row-level data-quality rules for staged flight records.
+"""Deliverable 2: Data Validation -- row-level data-quality rules + reject handling.
 
-Pure pandas -- no Airflow or database imports -- so it's unit-testable without
-any infrastructure. `validate_dataframe` is the only entry point the DAG uses.
+`validate_dataframe` is pure pandas (no DB/Airflow imports), so it's
+unit-testable on its own; `validate_and_stage` is the DB-facing entry point
+the DAG calls, which reads `flights`, splits valid/rejected, writes rejected
+rows to `rejected_rows`, and removes them from `flights` so that table always
+ends the task containing only valid rows.
 """
 
 from __future__ import annotations
 
 import pandas as pd
+from sqlalchemy import text
+from sqlalchemy.engine import Engine
 
 NUMERIC_NON_NEGATIVE_COLUMNS = ["base_fare", "tax_surcharge"]
 REQUIRED_NON_NULL_COLUMNS = [
@@ -18,6 +23,8 @@ REQUIRED_NON_NULL_COLUMNS = [
     "departure_datetime",
 ]
 CATEGORICAL_NON_EMPTY_COLUMNS = ["travel_class", "stopovers", "booking_source", "seasonality"]
+
+REJECTED_TABLE = "rejected_rows"
 
 
 def _build_code_reference(df: pd.DataFrame, code_col: str, name_col: str) -> dict:
@@ -84,3 +91,29 @@ def validate_dataframe(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     rejected_df = df.loc[is_rejected].copy()
     rejected_df["reason"] = reasons.loc[is_rejected]
     return valid_df, rejected_df
+
+
+def write_rejected_rows(rejected_df: pd.DataFrame, engine: Engine) -> int:
+    """Appends rejected rows to `rejected_rows`, renaming their origin `id` to
+    `source_row_id` so it doesn't collide with rejected_rows' own primary key."""
+    if rejected_df.empty:
+        return 0
+    out = rejected_df.rename(columns={"id": "source_row_id"})
+    out.to_sql(REJECTED_TABLE, engine, if_exists="append", index=False)
+    return len(out)
+
+
+def validate_and_stage(engine: Engine) -> dict:
+    """Reads `flights`, splits valid/rejected, writes rejects, and deletes
+    rejected rows from `flights` so it ends up containing only valid rows."""
+    staged_df = pd.read_sql_table("flights", engine)
+    valid_df, rejected_df = validate_dataframe(staged_df)
+
+    rejected_count = write_rejected_rows(rejected_df, engine)
+    if rejected_count:
+        with engine.begin() as conn:
+            conn.execute(
+                text("DELETE FROM flights WHERE id = :id"), rejected_df[["id"]].to_dict("records")
+            )
+
+    return {"rows_valid": len(valid_df), "rows_rejected": rejected_count}
