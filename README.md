@@ -107,6 +107,16 @@ docker-compose down
 
 Add `-v` to also remove the MySQL/Postgres data volumes (full reset).
 
+## Troubleshooting
+
+**`ports are not available: ... bind: ... 3306`** — something on your machine
+(often a local MySQL install) is already using port 3306. This project's
+MySQL container publishes to host port `3307` instead (see
+`docker-compose.yaml`'s `mysql.ports`) specifically to avoid that collision;
+containers still talk to each other over the internal Docker network on
+`mysql:3306` regardless of the host-side port. If you still hit a conflict,
+change the host-side port (`"3307:3306"`) to any other free port.
+
 ## Further reading
 
 - [`docs/architecture.md`](docs/architecture.md) — pipeline design, DAG task breakdown, data model
